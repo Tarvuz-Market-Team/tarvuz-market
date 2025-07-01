@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Data
@@ -68,5 +69,11 @@ public class Cart extends BaseModel {
     public void removeItem(UUID productId) {
         items.removeIf(item -> item.getProductId().equals(productId));
         super.touch();
+    }
+  
+    public double calculateTotalPrice(Function<UUID, Double> getProductPrice) {
+        return items.stream()
+                .mapToDouble(item -> getProductPrice.apply(item.getProductId()) * item.getAmount())
+                .sum();
     }
 }

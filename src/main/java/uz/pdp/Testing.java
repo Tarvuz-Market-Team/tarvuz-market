@@ -1,7 +1,6 @@
 package uz.pdp;
 
-public class Main {
+public class Testing {
     public static void main(String[] args) {
-        System.out.println("hii");
     }
 }

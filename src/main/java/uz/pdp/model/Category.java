@@ -12,6 +12,6 @@ import uz.pdp.base.BaseModel;
 @EqualsAndHashCode(callSuper = true)
 public class Category extends BaseModel {
     private String name;
-    private Category parent;
+    private UUID parentId;
     private boolean isLast = true;
 }

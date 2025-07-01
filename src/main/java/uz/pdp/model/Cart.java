@@ -70,7 +70,7 @@ public class Cart extends BaseModel {
         items.removeIf(item -> item.getProductId().equals(productId));
         super.touch();
     }
-
+  
     public double calculateTotalPrice(Function<UUID, Double> getProductPrice) {
         return items.stream()
                 .mapToDouble(item -> getProductPrice.apply(item.getProductId()) * item.getAmount())

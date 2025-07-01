@@ -14,8 +14,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class Order extends BaseModel {
-    private transient Cart cart;
-
     private UUID cartId;
     private Customer customer;
     private List<BoughtItem> boughtItems;
@@ -25,8 +23,6 @@ public class Order extends BaseModel {
     @NoArgsConstructor
     @AllArgsConstructor
     public static final class Customer {
-        transient User objCustomer;
-
         UUID id;
         String fullName;
         String username;
@@ -36,8 +32,6 @@ public class Order extends BaseModel {
     @NoArgsConstructor
     @AllArgsConstructor
     public static final class BoughtItem {
-        transient Cart.Item item;
-
         Seller seller;
         UUID productId;
         String product;
@@ -50,8 +44,6 @@ public class Order extends BaseModel {
     @NoArgsConstructor
     @AllArgsConstructor
     public static final class Seller {
-        transient User objSeller;
-
         UUID id;
         String fullName;
         String username;

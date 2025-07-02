@@ -3,10 +3,7 @@ package uz.pdp.model;
 import lombok.*;
 import uz.pdp.base.BaseModel;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -16,8 +13,7 @@ import java.util.stream.Collectors;
 public class Cart extends BaseModel {
     private final UUID customerId;
     private boolean ordered;
-    @Getter(AccessLevel.NONE)
-    private final List<Item> items = new ArrayList<>();
+    private final Set<Item> items = new HashSet<>();
 
     @Data
     @AllArgsConstructor
@@ -27,6 +23,7 @@ public class Cart extends BaseModel {
         int amount;
     }
 
+    /*
     public void addItem(UUID productId, int amount) {
         for (Item item : items) {
             if (item.getProductId().equals(productId)) {
@@ -75,5 +72,5 @@ public class Cart extends BaseModel {
         return items.stream()
                 .mapToDouble(item -> getProductPrice.apply(item.getProductId()) * item.getAmount())
                 .sum();
-    }
+    }*/
 }

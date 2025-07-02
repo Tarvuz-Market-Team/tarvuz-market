@@ -12,6 +12,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import java.util.UUID;
+
 public class CategoryService implements BaseService<Category> {
     private static final String FILE_NAME = "categories.xml";
     public static final UUID ROOT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");

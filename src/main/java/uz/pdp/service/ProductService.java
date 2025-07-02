@@ -95,7 +95,7 @@ public class ProductService implements BaseService<Product> {
             throw new InvalidCategoryException("Product with this ID already exists: " + product.getId());
         }
         if (findByName(product.getName()).isPresent()) {
-            throw new InvalidNameException("Category name already used: '" + product.getName() + "'");
+            throw new InvalidNameException("Product name already used: '" + product.getName() + "'");
         }
     }
 

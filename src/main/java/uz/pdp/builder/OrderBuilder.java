@@ -14,6 +14,7 @@ import uz.pdp.record.UserInfo;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -32,8 +33,8 @@ public class OrderBuilder {
         order.setCartId(cart.getId());
         order.setCustomer(buildeOrderCustomer(userInfo));
         order.setBoughtItems(buildOrderBoughtItems(getProductById, getIgnoreActiveSellerById));
-        order.setGrandTotal(CartUtils.calculatePrice(cart.getItems(), getProductById));
-
+//        order.setGrandTotal(CartUtils.calculatePrice(cart.getItems(), getProductById));
+//      todo implument calculatePrice
         return order;
     }
 
@@ -95,7 +96,7 @@ public class OrderBuilder {
     }
 
 
-    private List<Item> validateItemList(List<Item> items) {
+    private List<Item> validateItemList(Set<Item> items) {
 //        return Optional.ofNullable(items)
 //                .filter(list -> !list.isEmpty())
 //                .orElseThrow(() -> new InvalidOrderException("Cannot create order from an empty cart."));
@@ -104,7 +105,8 @@ public class OrderBuilder {
             throw new InvalidOrderException("Cannot create order from an empty cart.");
         }
 
-        return items;
+        return new ArrayList<>(items);
+//        return items;
     }
 
 }

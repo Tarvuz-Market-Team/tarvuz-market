@@ -1,15 +1,19 @@
 package uz.pdp.model;
 
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import uz.pdp.base.BaseModel;
 
 import java.util.UUID;
 
 @Data
+@RequiredArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class Product extends BaseModel {
-    private int quantity;
     private String name;
-    private Double price;
-    private UUID sellerId;
+    private int quantity;
+    private double price;
+    private UUID categoryId;
+    private final UUID sellerId;
 }

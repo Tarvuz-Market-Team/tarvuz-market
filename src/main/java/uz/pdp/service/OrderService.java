@@ -1,6 +1,5 @@
 package uz.pdp.service;
 
-import uz.pdp.base.BaseModel;
 import uz.pdp.base.BaseService;
 import uz.pdp.builder.OrderBuilder;
 import uz.pdp.exception.InvalidOrderException;

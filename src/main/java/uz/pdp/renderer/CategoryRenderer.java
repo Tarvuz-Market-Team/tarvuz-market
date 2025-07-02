@@ -49,6 +49,7 @@ public final class CategoryRenderer {
                     .append(children.stream().map(Category::getName).collect(Collectors.joining(", ")))
                     .append("\n");
 
+
             children.forEach(child -> renderRecursive(child, parentMap, sb));
         }
     }

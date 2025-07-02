@@ -1,9 +1,6 @@
 package uz.pdp.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import uz.pdp.base.BaseModel;
 
 import java.util.List;

@@ -1,12 +1,14 @@
-package uz.pdp.model;
+package uz.pdp.record;
 
 import lombok.*;
-import uz.pdp.base.BaseModel;
+
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User extends BaseModel {
+public class UserInfo {
+    private UUID id;
     private String username;
     private String fullName;
 }

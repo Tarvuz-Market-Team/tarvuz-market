@@ -29,7 +29,7 @@ public class Testing {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void testing() throws IOException {
         Optional<User> adminO = userService.findByUsername("admin");
         Optional<User> customerO = userService.findByUsername("customer");
         Optional<User> sellerO = userService.findByUsername("seller");
@@ -54,5 +54,12 @@ public class Testing {
         );
 
         orderService.add(order);
+    }
+
+    private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
+
+
+    public static void main(String[] args) {
+
     }
 }

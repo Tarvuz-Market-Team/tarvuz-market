@@ -6,13 +6,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-@RequiredArgsConstructor
 public final class FileUtils {
     private static final String PATH = "src/main/java/uz/pdp/dao/";
 
@@ -38,6 +36,8 @@ public final class FileUtils {
         xmlMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
+    private FileUtils() {
+    }
 
     public static <T> void writeToJson(String fileName, T t) throws IOException {
         objectMapper

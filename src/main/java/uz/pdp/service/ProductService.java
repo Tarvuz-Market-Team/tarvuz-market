@@ -1,11 +1,13 @@
 package uz.pdp.service;
 
 import uz.pdp.base.BaseService;
-import uz.pdp.exception.InvalidCategoryException;
 import uz.pdp.exception.InvalidNameException;
 import uz.pdp.exception.InvalidProductException;
+import uz.pdp.exception.InsufficientStockException;
 import uz.pdp.model.Product;
+import uz.pdp.model.User;
 import uz.pdp.util.FileUtils;
+import uz.pdp.xmlwrapper.UserList;
 
 import java.io.IOException;
 import java.util.*;
@@ -13,19 +15,19 @@ import java.util.stream.Collectors;
 
 public class ProductService implements BaseService<Product> {
     private static final String FILE_NAME = "products.json";
-    public static final UUID ROOT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
     private final List<Product> products;
+    public static final UUID ROOT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     public ProductService() throws IOException {
         products = readProductsFromFile();
     }
 
-
     @Override
-    public void add(Product product) throws IOException {
+    public void add(Product product) throws IOException, InvalidProductException, InvalidNameException {
         throwIfInvalid(product);
 
         products.add(product);
+        product.touch();
 
         saveProductsToFile();
     }
@@ -46,42 +48,42 @@ public class ProductService implements BaseService<Product> {
     }
 
     @Override
-    public boolean update(UUID id, Product product) throws IOException {
-        Optional<Product> optionalProduct = findById(id);
-        if (optionalProduct.isPresent()) {
-            Product existing = optionalProduct.get();
-            if (existing.isActive()) {
-                if (findByName(product.getName()).isPresent()) {
-                    throw new InvalidProductException("Product name  already used" + product.getName() + " ");
-                }
+    public boolean update(UUID id, Product product)
+            throws IOException, InvalidProductException, InvalidNameException {
 
-                existing.setName(product.getName());
-                existing.setQuantity(product.getQuantity());
-                existing.setPrice(product.getPrice());
-                existing.setCategoryId(product.getCategoryId());
-                existing.touch();
+        Product existing = findById(id)
+                .orElseThrow(() -> new InvalidProductException("Product with this ID does not exist: " + id));
 
-                saveProductsToFile();
-                return true;
-
-            }
+        if (!existing.isActive()) {
+            throw new InvalidProductException("Product is not active: " + id);
         }
-        return false;
+        if (findByName(product.getName()).isPresent()) {
+            throw new InvalidProductException("Product name  already used" + product.getName() + " ");
+        }
+
+        existing.setName(product.getName());
+        existing.setQuantity(product.getQuantity());
+        existing.setPrice(product.getPrice());
+        existing.setCategoryId(product.getCategoryId());
+        existing.touch();
+
+        saveProductsToFile();
+        return true;
     }
 
     @Override
-    public void deactivate(UUID id) throws IOException {
-        Optional<Product> optionalProduct = findById(id);
-        if (optionalProduct.isPresent()) {
-            Product existing = optionalProduct.get();
-            if (existing.isActive()) {
-                existing.setActive(false);
-                existing.touch();
+    public void deactivate(UUID id) throws IOException, NoSuchElementException, InvalidProductException {
+        Product product = findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Product with this ID does not exist: " + id));
 
-            }
+        if (!product.isActive()) {
+            throw new InvalidProductException("Product is not active: " + id);
         }
-        saveProductsToFile();
 
+        product.setActive(false);
+        product.touch();
+
+        saveProductsToFile();
     }
 
     @Override
@@ -90,12 +92,12 @@ public class ProductService implements BaseService<Product> {
         saveProductsToFile();
     }
 
-    private void throwIfInvalid(Product product) {
+    private void throwIfInvalid(Product product) throws InvalidProductException, InvalidNameException {
         if (findById(product.getId()).isPresent()) {
-            throw new InvalidCategoryException("Product with this ID already exists: " + product.getId());
+            throw new InvalidProductException("Product with this ID already exists: " + product.getId());
         }
         if (findByName(product.getName()).isPresent()) {
-            throw new InvalidNameException("Category name already used: '" + product.getName() + "'");
+            throw new InvalidNameException("Product name already used: '" + product.getName() + "'");
         }
     }
 
@@ -120,50 +122,81 @@ public class ProductService implements BaseService<Product> {
                 .findFirst();
     }
 
-    public boolean isCategoryEmpty(UUID categoryId) {
+    public boolean isInStock(UUID productId, int amount) {
         return products.stream()
                 .filter(Product::isActive)
-                .noneMatch(product -> product.getCategoryId().equals(categoryId));
+                .filter(product -> product.getId().equals(productId))
+                .anyMatch(product -> product.getQuantity() >= amount);
     }
 
-    public void purchaseProducts(UUID productId, int amount) throws IOException {
-        Optional<Product> optionalProduct = findById(productId);
-        if (optionalProduct.isPresent()) {
-            Product existing = optionalProduct.get();
-            if (existing.isActive()) {
-                if (amount <= 0) {
-                    throw new InvalidProductException("Quantity must be positive");
-                }
-                if (amount > existing.getQuantity()) {
-                    throw new InvalidProductException("Insufficient stock");
-                }
-
-                existing.setQuantity(existing.getQuantity() - amount);
-
-                if (existing.getQuantity() == 0) {
-                    existing.setActive(false);
-                }
-
-                existing.touch();
-                saveProductsToFile();
-            }
-        }
+    public boolean isCategoryEmpty(UUID id) {
+        return products.stream()
+                .filter(Product::isActive)
+                .noneMatch(product -> product.getCategoryId().equals(id));
     }
 
-    public void renameProducts(UUID productName, String name) throws IOException {
-        Optional<Product> productOptional = findById(productName);
-        if (productOptional.isPresent()) {
-            Product existing = productOptional.get();
-            if (existing.isActive()) {
-                if (findByName(name).isPresent()) {
-                    throw new InvalidProductException("Product name already used" + name + " ");
-                }
+    private void purchase(UUID productId, int amount)
+            throws IOException,
+            InvalidProductException,
+            IllegalArgumentException,
+            InsufficientStockException,
+            NoSuchElementException {
 
-                existing.setName(name);
-                existing.touch();
-            }
+        Product product = findById(productId)
+                .orElseThrow(() -> new NoSuchElementException("Product with this ID does not exist: " + productId));
+
+        if (!product.isActive()) {
+            throw new InvalidProductException("Product is not active: " + productId);
         }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Purchase amount must be greater than zero: " + amount);
+        }
+        if (amount > product.getQuantity()) {
+            throw new InsufficientStockException("Insufficient stock for product: " + productId);
+        }
+
+        product.setQuantity(product.getQuantity() - amount);
+        if (product.getQuantity() == 0) {
+            product.setActive(false);
+        }
+
+        product.touch();
         saveProductsToFile();
+    }
+
+    public void renameProduct(UUID id, String newName)
+            throws IOException, InvalidProductException, InvalidNameException, NoSuchElementException {
+
+        Product product = findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Product with this ID does not exist: " + id));
+
+        if (!product.isActive()) {
+            throw new InvalidProductException("Product is not active: " + id);
+        }
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new InvalidNameException("Product name cannot be null or empty");
+        }
+        if (findByName(newName).isPresent()) {
+            throw new InvalidNameException("Product name already used" + newName + " ");
+        }
+
+        product.setName(newName);
+        product.touch();
+
+        saveProductsToFile();
+    }
+
+    public int getQuantity(UUID productId) throws IOException, NoSuchElementException {
+        Product product = findById(productId)
+                .orElseThrow(() -> new NoSuchElementException("Product with this ID does not exist: " + productId));
+
+        return product.getQuantity();
+    }
+
+    public void updateStock(Map<UUID, Integer> stockUpdates) throws IOException {
+        for (Map.Entry<UUID, Integer> entry : stockUpdates.entrySet()) {
+            purchase(entry.getKey(), entry.getValue());
+        }
     }
 
     private void saveProductsToFile() throws IOException {

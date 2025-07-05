@@ -13,4 +13,10 @@ public class Category extends BaseModel {
     private String name;
     private UUID parentId;
     private boolean isLast = true;
+
+    public Category(String name, UUID parentId) {
+        super();
+        this.name = name;
+        this.parentId = parentId;
+    }
 }

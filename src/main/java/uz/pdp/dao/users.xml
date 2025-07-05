@@ -1,3 +1,32 @@
-<users>
-
-</users>
+<ArrayList>
+  <item>
+    <id>f82255df-805b-4184-b6dc-edc422123e38</id>
+    <createdAt>2025-07-05T09:16:25.434Z</createdAt>
+    <updatedAt>2025-07-05T09:16:25.439Z</updatedAt>
+    <active>true</active>
+    <fullName>Admin</fullName>
+    <username>admin</username>
+    <password>admin</password>
+    <userRole>ADMIN</userRole>
+  </item>
+  <item>
+    <id>482c49eb-df9e-44e0-a444-d0657bdf003a</id>
+    <createdAt>2025-07-05T09:16:25.434Z</createdAt>
+    <updatedAt>2025-07-05T09:16:25.479Z</updatedAt>
+    <active>true</active>
+    <fullName>Customer</fullName>
+    <username>customer</username>
+    <password>customer</password>
+    <userRole>CUSTOMER</userRole>
+  </item>
+  <item>
+    <id>0ed5925b-2d17-4a3e-8fb0-7547d654c9ea</id>
+    <createdAt>2025-07-05T09:16:25.434Z</createdAt>
+    <updatedAt>2025-07-05T09:16:25.481Z</updatedAt>
+    <active>true</active>
+    <fullName>Seller</fullName>
+    <username>seller</username>
+    <password>seller</password>
+    <userRole>SELLER</userRole>
+  </item>
+</ArrayList>

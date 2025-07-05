@@ -1,4 +1,4 @@
-package uz.pdp.builder;
+package uz.pdp.factory;
 
 import lombok.*;
 import uz.pdp.exception.InvalidOrderException;
@@ -9,7 +9,8 @@ import uz.pdp.model.Order.Seller;
 import uz.pdp.model.Order.BoughtItem;
 import uz.pdp.model.Product;
 import uz.pdp.model.User;
-import uz.pdp.record.UserInfo;
+import uz.pdp.dto.UserDto;
+import uz.pdp.util.CartUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,26 +25,26 @@ public class OrderBuilder {
     private final Cart cart;
 
     public Order buildNewOrder(
-            UserInfo userInfo,
-            Function<UUID, User> getIgnoreActiveSellerById,
-            Function<UUID, Product> getProductById
-    ) throws IOException, InvalidOrderException {
+            UserDto userDto,
+            Function<UUID, User> IgnoreActiveSellerGetter,
+            Function<UUID, Product> getProductById,
+            Function<UUID, Double> productPriceGetter
+    ) throws InvalidOrderException {
         Order order = new Order();
 
         order.setCartId(cart.getId());
-        order.setCustomer(buildeOrderCustomer(userInfo));
-        order.setBoughtItems(buildOrderBoughtItems(getProductById, getIgnoreActiveSellerById));
-//        order.setGrandTotal(CartUtils.calculatePrice(cart.getItems(), getProductById));
-//      todo implument calculatePrice
+        order.setCustomer(buildeOrderCustomer(userDto));
+        order.setBoughtItems(buildOrderBoughtItems(getProductById, IgnoreActiveSellerGetter));
+        order.setGrandTotal(CartUtils.calculatePrice(cart.getItems(), productPriceGetter));
         return order;
     }
 
-    private Order.Customer buildeOrderCustomer(UserInfo userInfo) {
+    private Order.Customer buildeOrderCustomer(UserDto userDto) {
         Order.Customer customer = new Order.Customer();
 
-        customer.setUsername(userInfo.getUsername());
-        customer.setFullName(userInfo.getFullName());
-        customer.setId(userInfo.getId());
+        customer.setUsername(userDto.getUsername());
+        customer.setFullName(userDto.getFullName());
+        customer.setId(userDto.getId());
 
         return customer;
     }
@@ -97,16 +98,10 @@ public class OrderBuilder {
 
 
     private List<Item> validateItemList(Set<Item> items) {
-//        return Optional.ofNullable(items)
-//                .filter(list -> !list.isEmpty())
-//                .orElseThrow(() -> new InvalidOrderException("Cannot create order from an empty cart."));
-
         if(items.isEmpty()) {
             throw new InvalidOrderException("Cannot create order from an empty cart.");
         }
 
         return new ArrayList<>(items);
-//        return items;
     }
-
 }

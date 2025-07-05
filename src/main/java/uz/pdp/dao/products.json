@@ -1,1 +1,21 @@
-[]
+[ {
+  "id" : "2db5f27b-57cb-47d0-b561-95c76449ca75",
+  "createdAt" : "2025-07-05T10:16:38.782Z",
+  "updatedAt" : "2025-07-05T10:16:38.783Z",
+  "active" : true,
+  "sellerId" : "0ed5925b-2d17-4a3e-8fb0-7547d654c9ea",
+  "categoryId" : "dceed009-5f60-4421-8205-6d269c27550c",
+  "name" : "BMW X5",
+  "quantity" : 50,
+  "price" : 25000.0
+}, {
+  "id" : "ce591fd8-a4a9-46ca-9f65-3c8243521eb5",
+  "createdAt" : "2025-07-05T10:36:05.234Z",
+  "updatedAt" : "2025-07-05T10:36:05.236Z",
+  "active" : true,
+  "sellerId" : "0ed5925b-2d17-4a3e-8fb0-7547d654c9ea",
+  "categoryId" : "dceed009-5f60-4421-8205-6d269c27550c",
+  "name" : "BMW X6",
+  "quantity" : 100,
+  "price" : 32000.0
+} ]

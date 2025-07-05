@@ -1,1 +1,38 @@
-[]
+[ {
+  "id" : "5d39c891-26a6-4107-a71d-014631e3a6d1",
+  "createdAt" : "2025-07-05T11:36:28.618Z",
+  "updatedAt" : "2025-07-05T11:36:28.624Z",
+  "active" : true,
+  "cartId" : "66b32a93-846e-4d58-b5ae-cda94864c4b1",
+  "customer" : {
+    "id" : "482c49eb-df9e-44e0-a444-d0657bdf003a",
+    "fullName" : "Customer",
+    "username" : "customer"
+  },
+  "boughtItems" : [ {
+    "seller" : {
+      "id" : "0ed5925b-2d17-4a3e-8fb0-7547d654c9ea",
+      "fullName" : "Seller",
+      "username" : "seller",
+      "active" : true
+    },
+    "productId" : "ce591fd8-a4a9-46ca-9f65-3c8243521eb5",
+    "product" : "BMW X6",
+    "amountBought" : 25,
+    "pricePerPsc" : 32000.0,
+    "totalPaid" : 800000.0
+  }, {
+    "seller" : {
+      "id" : "0ed5925b-2d17-4a3e-8fb0-7547d654c9ea",
+      "fullName" : "Seller",
+      "username" : "seller",
+      "active" : true
+    },
+    "productId" : "2db5f27b-57cb-47d0-b561-95c76449ca75",
+    "product" : "BMW X5",
+    "amountBought" : 10,
+    "pricePerPsc" : 25000.0,
+    "totalPaid" : 250000.0
+  } ],
+  "grandTotal" : 1050000.0
+} ]

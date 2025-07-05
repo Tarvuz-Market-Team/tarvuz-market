@@ -1,22 +1,21 @@
 package uz.pdp.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import uz.pdp.base.BaseModel;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class User extends BaseModel {
-    public enum userRole {
-        SELLER,
-        CUSTOMER,
-        ADMIN,
-    }
-
     private String fullName;
     private String username;
     private String password;
-    private String userRole;
+    private UserRole userRole;
+
+    public enum UserRole {
+        ADMIN,
+        SELLER,
+        CUSTOMER,
+    }
 }

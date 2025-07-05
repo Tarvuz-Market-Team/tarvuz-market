@@ -1,46 +1,58 @@
 package uz.pdp;
-import uz.pdp.model.Category;
+
+import com.sun.org.apache.xpath.internal.operations.Or;
+import uz.pdp.dto.UserDto;
+import uz.pdp.factory.OrderBuilder;
+import uz.pdp.model.*;
 import uz.pdp.renderer.CategoryRenderer;
-import uz.pdp.service.CategoryService;
+import uz.pdp.service.*;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class Testing {
+    static CartService cartService;
+    static CategoryService categoryService;
+    static OrderService orderService;
+    static ProductService productService;
+    static UserService userService;
+
+    static {
+        try {
+            cartService = new CartService();
+            categoryService = new CategoryService();
+            orderService = new OrderService();
+            productService = new ProductService();
+            userService = new UserService();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) throws IOException {
-        CategoryService service = new CategoryService();
+        Optional<User> adminO = userService.findByUsername("admin");
+        Optional<User> customerO = userService.findByUsername("customer");
+        Optional<User> sellerO = userService.findByUsername("seller");
 
-        // Faylni tozalab boshlaymiz
-        service.clearAndSave();
+        Optional<Category> carsO = categoryService.findByName("Cars");
+        Optional<Category> motorcyclesO = categoryService.findByName("Motorcycles");
+        Optional<Category> trucksO = categoryService.findByName("Trucks");
 
-        // Rootlar
-        Category phone = new Category("Phone", CategoryService.ROOT_UUID, true);
-        Category food = new Category("Food", CategoryService.ROOT_UUID, true);
-        Category car = new Category("Car", CategoryService.ROOT_UUID, true);
+        Optional<Category> suvsO = categoryService.findByName("SUVs");
 
-        service.add(phone);
-        service.add(food);
-        service.add(car);
+        Optional<Product> bmwX5 = productService.findByName("BMW X5");
+        Optional<Product> bmwX6 = productService.findByName("BMW X6");
 
-        // Phone bolalari
-        Category samsung = new Category("Samsung", phone.getId(), true);
-        Category iphone = new Category("iPhone", phone.getId(), true);
-        service.add(samsung);
-        service.add(iphone);
+        Optional<Cart> cart = cartService.findByCustomerId(customerO.get().getId());
 
-        // Food bolalari
-        Category pizza = new Category("Pizza", food.getId(), true);
-        Category palov = new Category("Palov", food.getId(), true);
-        service.add(pizza);
-        service.add(palov);
+        OrderBuilder orderBuilder = new OrderBuilder(cart.get());
+        Order order = orderBuilder.buildNewOrder(
+                new UserDto(customerO.get()),
+                id -> userService.findIgnoreActiveSeller(id).get(),
+                id -> productService.findById(id).get(),
+                id -> productService.findById(id).get().getPrice()
+        );
 
-        // BYD bolalari
-        Category kia = new Category("KIA", car.getId(), true);
-        Category bmw = new Category("BMW", car.getId(), true);
-        service.add(kia);
-        service.add(bmw);
-
-        // Barchasini renderer bilan chiqaramiz
-        String tree = CategoryRenderer.render(service.getAll());
-        System.out.println(tree);
+        orderService.add(order);
     }
 }

@@ -2,13 +2,15 @@ package uz.pdp.service;
 
 import uz.pdp.base.BaseService;
 import uz.pdp.exception.InvalidCartException;
-import uz.pdp.exception.OutOfStockException;
+import uz.pdp.exception.InsufficientStockException;
+import uz.pdp.exception.InvalidProductException;
 import uz.pdp.model.Cart;
 import uz.pdp.model.Cart.Item;
 import uz.pdp.util.FileUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -27,6 +29,7 @@ public class CartService implements BaseService<Cart> {
         throwIfInvalid(cart);
 
         carts.add(cart);
+        cart.touch();
 
         saveCartsToFile();
     }
@@ -47,19 +50,27 @@ public class CartService implements BaseService<Cart> {
     }
 
     @Override
-    public boolean update(UUID id, Cart cart) throws IOException {
+    public boolean update(UUID id, Cart cart) throws IOException, InvalidCartException, NoSuchElementException {
+        Cart existing = findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Cart with this ID does not exist: " + id));
+
+        if (!existing.isActive()) {
+            throw new InvalidCartException("Cart is not active: " + id);
+        }
+
         saveCartsToFile();
         return false;
     }
 
     @Override
-    public void deactivate(UUID id) throws IOException {
-        Optional<Cart> optionalCart = findById(id);
-        if (!optionalCart.isPresent()) {
-            throw new IllegalArgumentException("Cart with this ID does not exist.");
+    public void deactivate(UUID id) throws IOException, NoSuchElementException, InvalidCartException {
+        Cart cart = findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Cart with this ID does not exist: " + id));
+
+        if (!cart.isActive()) {
+            throw new InvalidCartException("Cart is already inactive: " + id);
         }
 
-        Cart cart = optionalCart.get();
         cart.setActive(false);
         cart.touch();
 
@@ -72,9 +83,9 @@ public class CartService implements BaseService<Cart> {
         saveCartsToFile();
     }
 
-    private void throwIfInvalid(Cart cart) throws InvalidCartException {
+    private void throwIfInvalid(Cart cart) throws NoSuchElementException {
         if (findById(cart.getId()).isPresent()) {
-            throw new InvalidCartException("Cart with this ID already exists.");
+            throw new NoSuchElementException("Cart with this ID already exists.");
         }
     }
 
@@ -85,33 +96,58 @@ public class CartService implements BaseService<Cart> {
                 .findFirst();
     }
 
-    public void orderCart(UUID cartId, Consumer<Set<UUID>> stockProductUpdater) {
+    public void purchaseCart(UUID cartId,
+                             Consumer<Map<UUID, Integer>> stockUpdater)
+            throws IOException,
+            NoSuchElementException {
+
         Cart cart = findById(cartId)
                 .orElseThrow(() -> new NoSuchElementException("Cart not found: " + cartId));
 
-        Set<UUID> productIds = cart.getItems().stream()
-                .map(Item::getProductId)
-                .collect(Collectors.toSet());
+        Map<UUID, Integer> newQuantityById = cart.getItems().stream()
+                .collect(Collectors.toMap(
+                        Item::getProductId,
+                        Item::getAmount
+                ));
 
-        stockProductUpdater.accept(productIds);
+        stockUpdater.accept(newQuantityById);
+
         cart.setOrdered(true);
+        cart.touch();
+
+        saveCartsToFile();
     }
 
-    public void updateOutOfStockItemsToMax(UUID cartId, Function<UUID, Integer> maxQuantityGetter) {
+    public void updateOutOfStockItemsToMax(UUID cartId,
+                                           Function<UUID, Integer> quantityGetter)
+            throws IOException,
+            NoSuchElementException {
+
         Cart cart = findById(cartId)
                 .orElseThrow(() -> new NoSuchElementException("Cart not found: " + cartId));
 
         for (Item item : new HashSet<>(cart.getItems())) {
-            int amount = maxQuantityGetter.apply(item.getProductId());
+            int amount = quantityGetter.apply(item.getProductId());
             if (amount != 0) {
                 item.setAmount(amount);
             } else {
                 removeItem(cartId, item.getProductId());
             }
         }
+        cart.touch();
+
+        saveCartsToFile();
     }
 
-    public void addItem(UUID cartId, UUID productId, int amount, Predicate<Integer> stockChecker) {
+    public void addItem(UUID cartId,
+                        UUID productId,
+                        int amount,
+                        BiPredicate<UUID, Integer> stockChecker)
+            throws IOException,
+            IllegalArgumentException,
+            NoSuchElementException,
+            InsufficientStockException {
+
         if (amount <= 0) throw new IllegalArgumentException("Amount must be positive.");
 
         Cart cart = findById(cartId)
@@ -120,24 +156,39 @@ public class CartService implements BaseService<Cart> {
         Item item = cart.getItems().stream()
                 .filter(i -> i.getProductId().equals(productId))
                 .findFirst()
-                .orElseGet(() -> {
-                    Item newItem = new Item(productId);
-                    cart.getItems().add(newItem);
-                    return newItem;
-                });
+                .orElseGet(() -> new Item(productId));
 
         int newTotalAmount = item.getAmount() + amount;
 
-        if (stockChecker.test(newTotalAmount)) {
-            item.setAmount(newTotalAmount);
-        } else {
-            throw new OutOfStockException("Cannot add " + amount + " units of product " + productId +
+        if (!stockChecker.test(productId, newTotalAmount)) {
+            throw new InsufficientStockException("Cannot add " + amount + " units of product " + productId +
                     " to cart " + cartId + ": insufficient stock.");
         }
+
+        item.setAmount(newTotalAmount);
+        cart.getItems().add(item);
+        cart.touch();
+
+        saveCartsToFile();
     }
 
-    // todo Document that it's a live reference
-    public Optional<Set<Item>> getItems(UUID cartId) {
+    /**
+     * Returns an {@link Optional} containing the set of items in the cart identified by {@code cartId}.
+     *
+     * <p><strong>Mutability Warning:</strong> The returned {@code Set<Item>} is a live reference
+     * to the internal state of the cart. Modifying this set (e.g., adding or removing items)
+     * will directly affect the contents of the cart.
+     *
+     * <p>Consumers should not assume immutability or thread-safety. If you require a snapshot,
+     * consider copying the set before use.
+     *
+     * @param cartId the ID of the cart
+     * @return an {@code Optional} containing the live item set, or {@code Optional.empty()} if the cart is not found
+     */
+    public Optional<Set<Item>> getItems(UUID cartId) throws NoSuchElementException {
+        findById(cartId)
+                .orElseThrow(() -> new NoSuchElementException("Cart not found: " + cartId));
+
         Optional<Cart> optionalCart = findById(cartId);
         return optionalCart.map(Cart::getItems);
     }
@@ -152,33 +203,35 @@ public class CartService implements BaseService<Cart> {
      *
      * <p>If you need a read-only or isolated copy, consider cloning the item manually.
      *
-     * @param cartId the ID of the cart
+     * @param cartId    the ID of the cart
      * @param productId the ID of the product
      * @return an {@code Optional<Item>} if found; otherwise, {@code Optional.empty()}
      */
-
-    public Optional<Item> findItem(UUID cartId, UUID productId) {
+    public Optional<Item> findItem(UUID cartId, UUID productId) throws NoSuchElementException {
         return getItems(cartId)
                 .flatMap(items -> items.stream()
                         .filter(item -> item.getProductId().equals(productId))
                         .findFirst());
     }
 
-    public Optional<Set<UUID>> extractProductIds(UUID cartId) {
+    public Optional<Set<UUID>> extractProductIds(UUID cartId) throws NoSuchElementException {
         return getItems(cartId)
                 .map(items -> items.stream()
                         .map(Item::getProductId)
                         .collect(Collectors.toSet()));
     }
 
-    public void removeItem(UUID cartId, UUID productId) {
+    public void removeItem(UUID cartId, UUID productId) throws IOException, NoSuchElementException, InvalidProductException {
         Cart cart = findById(cartId)
                 .orElseThrow(() -> new NoSuchElementException("Cart not found: " + cartId));
 
         boolean removed = cart.getItems().removeIf(item -> item.getProductId().equals(productId));
 
         if (!removed) {
-            throw new NoSuchElementException("Item not found for product ID: " + productId);
+            throw new InvalidProductException("Item not found for product ID: " + productId);
+        } else {
+            cart.touch();
+            saveCartsToFile();
         }
     }
 

@@ -1,83 +1,65 @@
 <categories>
   <category>
-    <id>c03e4505-742c-46ca-951c-644faaa8e247</id>
-    <createdAt>2025-07-02T13:17:59.112Z</createdAt>
-    <updatedAt>2025-07-02T13:17:59.112Z</updatedAt>
+    <id>df571ce3-8467-42b9-9949-ffad532984be</id>
+    <createdAt>2025-07-05T09:50:59.778Z</createdAt>
+    <updatedAt>2025-07-05T09:57:52.583Z</updatedAt>
     <active>true</active>
-    <name>Phone</name>
+    <name>Cars</name>
     <parentId>00000000-0000-0000-0000-000000000000</parentId>
     <last>false</last>
   </category>
   <category>
-    <id>a0b78fbf-3510-4367-8f41-baed2a9579a3</id>
-    <createdAt>2025-07-02T13:17:59.112Z</createdAt>
-    <updatedAt>2025-07-02T13:17:59.112Z</updatedAt>
+    <id>46148d58-8b75-47b1-834b-70b28531a8be</id>
+    <createdAt>2025-07-05T09:50:59.778Z</createdAt>
+    <updatedAt>2025-07-05T09:50:59.813Z</updatedAt>
     <active>true</active>
-    <name>Food</name>
+    <name>Motorcycles</name>
     <parentId>00000000-0000-0000-0000-000000000000</parentId>
+    <last>true</last>
+  </category>
+  <category>
+    <id>e9d93373-76da-459d-a16e-e812a51c9c45</id>
+    <createdAt>2025-07-05T09:50:59.779Z</createdAt>
+    <updatedAt>2025-07-05T09:50:59.821Z</updatedAt>
+    <active>true</active>
+    <name>Trucks</name>
+    <parentId>00000000-0000-0000-0000-000000000000</parentId>
+    <last>true</last>
+  </category>
+  <category>
+    <id>b04513ba-98d2-4bef-8496-74b7de3474e8</id>
+    <createdAt>2025-07-05T09:57:52.544Z</createdAt>
+    <updatedAt>2025-07-05T10:01:50.747Z</updatedAt>
+    <active>false</active>
+    <name>Sedans</name>
+    <parentId>df571ce3-8467-42b9-9949-ffad532984be</parentId>
     <last>false</last>
   </category>
   <category>
-    <id>18cc3dd5-3405-42fa-9ebc-01fb4dd73111</id>
-    <createdAt>2025-07-02T13:17:59.112Z</createdAt>
-    <updatedAt>2025-07-02T13:17:59.112Z</updatedAt>
+    <id>dceed009-5f60-4421-8205-6d269c27550c</id>
+    <createdAt>2025-07-05T09:57:52.544Z</createdAt>
+    <updatedAt>2025-07-05T09:57:52.588Z</updatedAt>
     <active>true</active>
-    <name>Car</name>
-    <parentId>00000000-0000-0000-0000-000000000000</parentId>
-    <last>false</last>
-  </category>
-  <category>
-    <id>cbf46ef7-852c-4e1f-8f8f-35d1a23dfaa8</id>
-    <createdAt>2025-07-02T13:17:59.140Z</createdAt>
-    <updatedAt>2025-07-02T13:17:59.140Z</updatedAt>
-    <active>true</active>
-    <name>Samsung</name>
-    <parentId>c03e4505-742c-46ca-951c-644faaa8e247</parentId>
+    <name>SUVs</name>
+    <parentId>df571ce3-8467-42b9-9949-ffad532984be</parentId>
     <last>true</last>
   </category>
   <category>
-    <id>a8acd9b0-295e-429d-a40a-85e5ee0fa934</id>
-    <createdAt>2025-07-02T13:17:59.140Z</createdAt>
-    <updatedAt>2025-07-02T13:17:59.140Z</updatedAt>
-    <active>true</active>
-    <name>iPhone</name>
-    <parentId>c03e4505-742c-46ca-951c-644faaa8e247</parentId>
+    <id>bbe0fa67-ca75-4f71-9bdc-4b157052a6ca</id>
+    <createdAt>2025-07-05T09:57:52.544Z</createdAt>
+    <updatedAt>2025-07-05T10:01:50.747Z</updatedAt>
+    <active>false</active>
+    <name>BMWs</name>
+    <parentId>b04513ba-98d2-4bef-8496-74b7de3474e8</parentId>
     <last>true</last>
   </category>
   <category>
-    <id>1187e682-2141-44e4-922e-4066d82f857b</id>
-    <createdAt>2025-07-02T13:17:59.145Z</createdAt>
-    <updatedAt>2025-07-02T13:17:59.145Z</updatedAt>
-    <active>true</active>
-    <name>Pizza</name>
-    <parentId>a0b78fbf-3510-4367-8f41-baed2a9579a3</parentId>
-    <last>true</last>
-  </category>
-  <category>
-    <id>8ec9e278-1648-48e2-b9d7-336e2726cb67</id>
-    <createdAt>2025-07-02T13:17:59.145Z</createdAt>
-    <updatedAt>2025-07-02T13:17:59.145Z</updatedAt>
-    <active>true</active>
-    <name>Palov</name>
-    <parentId>a0b78fbf-3510-4367-8f41-baed2a9579a3</parentId>
-    <last>true</last>
-  </category>
-  <category>
-    <id>b30e7e3e-7da6-4e2a-bd9b-5b804b0fae14</id>
-    <createdAt>2025-07-02T13:17:59.155Z</createdAt>
-    <updatedAt>2025-07-02T13:17:59.155Z</updatedAt>
-    <active>true</active>
-    <name>KIA</name>
-    <parentId>18cc3dd5-3405-42fa-9ebc-01fb4dd73111</parentId>
-    <last>true</last>
-  </category>
-  <category>
-    <id>25c126ce-5006-4af6-8112-69edc4658f9d</id>
-    <createdAt>2025-07-02T13:17:59.155Z</createdAt>
-    <updatedAt>2025-07-02T13:17:59.155Z</updatedAt>
-    <active>true</active>
-    <name>BMW</name>
-    <parentId>18cc3dd5-3405-42fa-9ebc-01fb4dd73111</parentId>
+    <id>c843cab1-182f-4377-be61-144116318848</id>
+    <createdAt>2025-07-05T09:57:52.544Z</createdAt>
+    <updatedAt>2025-07-05T10:10:07.519Z</updatedAt>
+    <active>false</active>
+    <name>Teslas</name>
+    <parentId>dceed009-5f60-4421-8205-6d269c27550c</parentId>
     <last>true</last>
   </category>
 </categories>

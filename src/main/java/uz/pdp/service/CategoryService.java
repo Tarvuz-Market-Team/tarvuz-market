@@ -24,11 +24,13 @@ public class CategoryService implements BaseService<Category> {
     }
 
     @Override
-    public void add(Category category) throws IOException, InvalidCategoryException {
+    public void add(Category category) throws IOException, InvalidCategoryException, InvalidNameException {
         throwIfInvalid(category);
 
-        makeNotLast(category.getParentId());
         categories.add(category);
+        category.touch();
+
+        makeCategoryNotLast(category.getParentId());
 
         saveCategoriesToFile();
     }
@@ -49,21 +51,25 @@ public class CategoryService implements BaseService<Category> {
     }
 
     @Override
-    public boolean update(UUID id, Category category) throws IOException {
-        Optional<Category> optionalCategory = findById(id);
-        if (optionalCategory.isPresent()) {
-            Category existing = optionalCategory.get();
-            if (existing.isActive()) {
-                if (findByName(category.getName()).isPresent()) {
-                    throw new InvalidNameException("Category name already used: '" + category.getName() + "'");
-                }
+    public boolean update(UUID id, Category category)
+            throws IOException, NoSuchElementException, InvalidCategoryException, InvalidNameException {
 
-                existing.setName(category.getName());
-                existing.setParentId(category.getParentId());
-                existing.setLast(category.isLast());
-                existing.touch();
-            }
+        Category existing = findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Category with this ID does not exist: " + id));
+
+        if (!existing.isActive()) {
+            throw new InvalidCategoryException("Category is not active: " + id);
         }
+        if (findByName(category.getName()).isPresent()) {
+            throw new InvalidNameException("Category name already used: '" + category.getName() + "'");
+        }
+
+        existing.setName(category.getName());
+        existing.setParentId(category.getParentId());
+        existing.setLast(category.isLast());
+        existing.touch();
+
+        makeCategoryNotLast(category.getParentId());
 
         saveCategoriesToFile();
         return false;
@@ -71,7 +77,14 @@ public class CategoryService implements BaseService<Category> {
     }
 
     @Override
-    public void deactivate(UUID id) throws IOException {
+    public void deactivate(UUID id) throws IOException, NoSuchElementException {
+        Category existing = findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Category with this ID does not exist: " + id));
+
+        if (!existing.isActive()) {
+            throw new InvalidCategoryException("Category is already inactive: " + id);
+        }
+
         Set<UUID> toDeactivate = new HashSet<>();
 
         collectDescendants(id, toDeactivate);
@@ -82,6 +95,8 @@ public class CategoryService implements BaseService<Category> {
                     category.setActive(false);
                     category.touch();
                 });
+
+        makeCategoryLastIfHasNoDescendants(existing.getParentId());
 
         saveCategoriesToFile();
     }
@@ -96,15 +111,15 @@ public class CategoryService implements BaseService<Category> {
     }
 
     public Optional<Category> findByName(String name) {
-        return categories.stream().filter(Category::isActive)
+        return categories.stream()
+                .filter(Category::isActive)
                 .filter(category -> category.getName().equalsIgnoreCase(name))
                 .findFirst();
     }
 
-    public void renameCategory(Category category, String newName) throws IOException {
-        if (findByName(newName).isPresent()) {
-            throw new InvalidNameException("Category name already used: '" + category.getName() + "'");
-        }
+    public void renameCategory(Category category, String newName) throws IOException, InvalidNameException {
+        findByName(newName)
+                .orElseThrow(() -> new InvalidNameException("Category name already used: '" + category.getName() + "'"));
 
         category.setName(newName);
         category.touch();
@@ -113,7 +128,8 @@ public class CategoryService implements BaseService<Category> {
     }
 
     private void collectDescendants(UUID id, Set<UUID> collected) {
-        if (categories.stream().noneMatch(category -> category.getId().equals(id))) return;
+        if (categories.stream()
+                .noneMatch(category -> category.getId().equals(id))) return;
 
         collected.add(id);
         categories.stream()
@@ -132,20 +148,31 @@ public class CategoryService implements BaseService<Category> {
         return categories.stream()
                 .filter(Category::isActive)
                 .filter(Category::isLast)
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.toList());
     }
 
     public List<Category> getCategoriesEmptyOfProducts(Predicate<Category> isEmptyOfProducts) {
         return getLastCategories().stream()
                 .filter(isEmptyOfProducts)
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.toList());
     }
 
-    private void makeNotLast(UUID parentId) {
-        Optional<Category> optionalCategory = findById(parentId);
-        if (optionalCategory.isPresent()) {
-            Category category = optionalCategory.get();
-            category.setLast(false);
+    private void makeCategoryNotLast(UUID id) {
+        findById(id)
+                .ifPresent(category -> {
+
+                    category.setLast(false);
+                    category.touch();
+                });
+    }
+
+    private void makeCategoryLastIfHasNoDescendants(UUID id) {
+        if (categories.stream()
+                .filter(Category::isActive)
+                .noneMatch(category -> category.getParentId().equals(id))) {
+
+            findById(id)
+                    .ifPresent(category -> category.setLast(true));
         }
     }
 

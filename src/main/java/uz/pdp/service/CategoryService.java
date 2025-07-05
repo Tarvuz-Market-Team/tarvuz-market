@@ -157,6 +157,18 @@ public class CategoryService implements BaseService<Category> {
                 .collect(Collectors.toList());
     }
 
+    public boolean isAvailableForSubcategory(UUID id, Predicate<Category> isEmptyOfProducts) {
+        return findById(id)
+                .map(isEmptyOfProducts::test)
+                .orElseThrow(() -> new NoSuchElementException("Category with this ID does not exist: " + id));
+    }
+
+    public boolean isAvailableForProduct(UUID id) {
+        return findById(id)
+                .map(Category::isLast)
+                .orElseThrow(() -> new NoSuchElementException("Category with this ID does not exist: " + id));
+    }
+
     private void makeCategoryNotLast(UUID id) {
         findById(id)
                 .ifPresent(category -> {

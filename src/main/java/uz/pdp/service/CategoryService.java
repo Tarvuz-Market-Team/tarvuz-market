@@ -71,6 +71,13 @@ public class CategoryService implements BaseService<Category> {
 
         makeCategoryNotLast(category.getParentId());
 
+        existing.setName(category.getName());
+        existing.setParentId(category.getParentId());
+        existing.setLast(category.isLast());
+        existing.touch();
+
+        makeCategoryNotLast(category.getParentId());
+
         saveCategoriesToFile();
         return false;
 

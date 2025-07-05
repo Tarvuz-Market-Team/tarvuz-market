@@ -1,1 +1,15 @@
-[]
+[ {
+  "id" : "66b32a93-846e-4d58-b5ae-cda94864c4b1",
+  "createdAt" : "2025-07-05T11:21:15.004Z",
+  "updatedAt" : "2025-07-05T11:21:15.038Z",
+  "active" : true,
+  "customerId" : "482c49eb-df9e-44e0-a444-d0657bdf003a",
+  "ordered" : false,
+  "items" : [ {
+    "productId" : "ce591fd8-a4a9-46ca-9f65-3c8243521eb5",
+    "amount" : 25
+  }, {
+    "productId" : "2db5f27b-57cb-47d0-b561-95c76449ca75",
+    "amount" : 10
+  } ]
+} ]

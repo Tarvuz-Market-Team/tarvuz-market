@@ -1,16 +1,15 @@
 package uz.pdp.service;
 
 import uz.pdp.base.BaseService;
+import uz.pdp.exception.InvalidNameException;
+import uz.pdp.exception.InvalidProductException;
 import uz.pdp.exception.InvalidUserException;
 import uz.pdp.model.User;
 import uz.pdp.util.FileUtils;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class UserService implements BaseService<User> {
@@ -22,13 +21,13 @@ public class UserService implements BaseService<User> {
     }
 
     @Override
-    public void add(User user) throws IOException {
+    public void add(User user) throws IOException, InvalidUserException, InvalidNameException {
         throwIfInvalid(user);
 
         user.setUsername(user.getUsername().toLowerCase(Locale.ENGLISH));
+        users.add(user);
         user.touch();
 
-        users.add(user);
         saveUsersToXml();
     }
 
@@ -48,17 +47,21 @@ public class UserService implements BaseService<User> {
     }
 
     @Override
-    public boolean update(UUID id, User user) throws IOException {
-        Optional<User> optionalUser = findById(id);
-        if (!optionalUser.isPresent()) {
-            throw new IllegalArgumentException("User with this ID does not exist.");
+    public boolean update(UUID id, User user)
+            throws IOException, InvalidUserException, InvalidNameException {
+        User existing = findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User with this ID does not exist: " + id));
+
+        if (!existing.isActive()) {
+            throw new IllegalArgumentException("User is not active: " + id);
+        }
+        if (findByUsername(user.getUsername()).isPresent()) {
+            throw new InvalidNameException("Username is already used: " + user.getUsername());
         }
 
-        User existing = optionalUser.get();
         existing.setFullName(user.getFullName());
-        existing.setUsername(user.getUsername());
+        existing.setUsername(user.getUsername().toLowerCase(Locale.ENGLISH));
         existing.setPassword(user.getPassword());
-        existing.setUserRole(user.getUserRole());
         existing.touch();
 
         saveUsersToXml();
@@ -66,15 +69,16 @@ public class UserService implements BaseService<User> {
     }
 
     @Override
-    public void deactivate(UUID id) throws IOException {
-        Optional<User> optionalUser = findById(id);
-        if (!optionalUser.isPresent()) {
-            throw new IllegalArgumentException("User with this ID does not exist");
+    public void deactivate(UUID id) throws IOException, InvalidUserException {
+        User existing = findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User with this ID does not exist: " + id));
+
+        if (!existing.isActive()) {
+            throw new IllegalArgumentException("User is not active: " + id);
         }
 
-        User user = optionalUser.get();
-        user.setActive(false);
-        user.touch();
+        existing.setActive(false);
+        existing.touch();
 
         saveUsersToXml();
     }
@@ -85,23 +89,14 @@ public class UserService implements BaseService<User> {
         saveUsersToXml();
     }
 
-    private void throwIfInvalid(User user) throws InvalidUserException {
+    private void throwIfInvalid(User user) throws InvalidUserException, InvalidNameException {
         if (findByUsername(user.getUsername()).isPresent() ) {
-            throw new InvalidUserException("User is not valid.");
+            throw new InvalidNameException("Username is already used: " + user.getUsername());
         }
         if(findById(user.getId()).isPresent()){
-            throw new InvalidUserException("User is not valid.");
+            throw new InvalidUserException("User with this ID already exists: " + user.getId());
         }
     }
-
-    private void saveUsersToXml() throws IOException {
-        FileUtils.writeToXml(FILE_NAME, users);
-    }
-
-    private List<User> readUsersFromFile() throws IOException {
-        return FileUtils.readFromXml(FILE_NAME, User.class);
-    }
-
 
     public Optional<User> login(String username, String password) {
         return users.stream()
@@ -111,9 +106,45 @@ public class UserService implements BaseService<User> {
                 .findFirst();
     }
 
+    public void changeUsername(UUID userId, String newUsername)
+            throws IOException, InvalidUserException, NoSuchElementException, InvalidNameException {
+        User user = findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User with this ID does not exist: " + userId));
+
+        if (!user.isActive()) {
+            throw new InvalidUserException("User is not active: " + userId);
+        }
+        if (newUsername == null || newUsername.trim().isEmpty()) {
+            throw new InvalidNameException("Username cannot be null or blank.");
+        }
+        if (findByUsername(newUsername).isPresent()) {
+            throw new InvalidNameException("Username is already used: " + newUsername);
+        }
+
+        user.setUsername(newUsername.toLowerCase(Locale.ENGLISH));
+        user.touch();
+
+        saveUsersToXml();
+    }
+
     public Optional<User> findByUsername(String username) {
         return users.stream()
                 .filter(user -> user.getUsername().equalsIgnoreCase(username))
                 .findFirst();
+    }
+
+    public Optional<User> findIgnoreActiveSeller(UUID sellerId) {
+        return users.stream()
+                .filter(user -> user.getUserRole() == User.UserRole.SELLER)
+                .filter(user -> user.getId().equals(sellerId))
+                .findFirst();
+    }
+
+    private void saveUsersToXml() throws IOException {
+        FileUtils.writeToXml(FILE_NAME, users);
+    }
+
+    private List<User> readUsersFromFile() throws IOException {
+        return FileUtils.readFromXml(FILE_NAME, User.class);
     }
 }

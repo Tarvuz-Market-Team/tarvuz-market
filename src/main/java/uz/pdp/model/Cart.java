@@ -3,23 +3,35 @@ package uz.pdp.model;
 import lombok.*;
 import uz.pdp.base.BaseModel;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class Cart extends BaseModel {
-    private final UUID customerId;
-    private boolean ordered;
+    @Setter(AccessLevel.NONE)
+    private UUID customerId;
+    private boolean ordered = false;
     private final Set<Item> items = new HashSet<>();
 
     @Data
     @AllArgsConstructor
-    @RequiredArgsConstructor
+    @NoArgsConstructor
     public static class Item {
-        final UUID productId;
+        @Setter(AccessLevel.NONE)
+        UUID productId;
         int amount;
+
+        public Item(UUID productId) {
+            this.productId = productId;
+        }
+    }
+
+    public Cart(UUID customerId) {
+        super();
+        this.customerId = customerId;
     }
 }

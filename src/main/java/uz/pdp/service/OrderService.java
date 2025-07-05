@@ -1,13 +1,13 @@
 package uz.pdp.service;
 
 import uz.pdp.base.BaseService;
-import uz.pdp.builder.OrderBuilder;
+import uz.pdp.factory.OrderBuilder;
 import uz.pdp.exception.InvalidOrderException;
 import uz.pdp.model.Cart;
 import uz.pdp.model.Order;
 import uz.pdp.model.Product;
 import uz.pdp.model.User;
-import uz.pdp.record.UserInfo;
+import uz.pdp.dto.UserDto;
 import uz.pdp.util.FileUtils;
 
 import java.io.IOException;
@@ -18,18 +18,18 @@ import java.util.stream.Collectors;
 
 public class OrderService implements BaseService<Order> {
     private static final String FILE = "orders.json";
-    private List<Order> orders;
+    private final List<Order> orders;
 
     public OrderService() throws IOException {
         orders = loadOrdersFromFile();
     }
 
-
     @Override
-    public void add(Order order) throws IOException {
+    public void add(Order order) throws IOException, InvalidOrderException {
         throwIfInvalid(order);
 
         orders.add(order);
+        order.touch();
 
         saveOrdersToFile();
     }
@@ -56,19 +56,18 @@ public class OrderService implements BaseService<Order> {
     }
 
     @Override
-    public void deactivate(UUID id) throws IOException {
-        Optional<Order> optionalOrder = findById(id);
+    public void deactivate(UUID id) throws IOException, IllegalArgumentException {
+        Order order = findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Order with this ID does not exist."));
 
-        if (!optionalOrder.isPresent()) {
-            throw new IllegalArgumentException("Order with this ID does not exist.");
+        if (!order.isActive()) {
+            throw new IllegalArgumentException("Order is already inactive: " + id);
         }
 
-        Order order = optionalOrder.get();
         order.setActive(false);
         order.touch();
 
         saveOrdersToFile();
-
     }
 
     @Override
@@ -78,21 +77,27 @@ public class OrderService implements BaseService<Order> {
     }
 
     private void throwIfInvalid(Order order) throws InvalidOrderException {
-        if(findById(order.getId()).isPresent()) {
-            throw new InvalidOrderException("Order with this ID already exists.");
+        if (findById(order.getId()).isPresent()) {
+            throw new InvalidOrderException("Order ID must be unique: " + order.getId());
         }
     }
 
-    public Order buildNewOrder(
-            Cart cart, User user,
-            Function<UUID, User> getIgnoreActiveSellerById,
-            Function<UUID, Product> getProductById
+    public Order buildOrder(
+            Cart cart,
+            User user,
+            Function<UUID, User> ignoreActiveSellerFinder,
+            Function<UUID, Product> productFinder,
+            Function<UUID, Double> productPriceGetter
     ) throws IOException, InvalidOrderException {
+
         OrderBuilder orderBuilder = new OrderBuilder(cart);
+
         return orderBuilder.buildNewOrder(
-                new UserInfo(user.getId(), user.getUsername(), user.getFullName()),
-                getIgnoreActiveSellerById,
-                getProductById);
+                new UserDto(user),
+                ignoreActiveSellerFinder,
+                productFinder,
+                productPriceGetter
+        );
     }
 
     public List<Order> getByCustomerId(UUID id) {
@@ -101,7 +106,7 @@ public class OrderService implements BaseService<Order> {
         return orders.stream()
                 .filter(Order::isActive)
                 .filter(matchesId)
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.toList());
     }
 
     public List<Order> filterTotalHigherThan(double amount) {
@@ -110,7 +115,7 @@ public class OrderService implements BaseService<Order> {
         return orders.stream()
                 .filter(Order::isActive)
                 .filter(totalHigherThanAmount)
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.toList());
     }
 
     public List<Order> filterTotalLowerThan(double amount) {
@@ -119,7 +124,7 @@ public class OrderService implements BaseService<Order> {
         return orders.stream()
                 .filter(Order::isActive)
                 .filter(totalLowerThanAmount)
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.toList());
     }
 
     private void saveOrdersToFile() throws IOException {
